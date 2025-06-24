@@ -1,127 +1,364 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../controllers/data_controller.dart';
+import '../models/data_model.dart';
 
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  // Paleta de colores constante
+  static const primaryColor = Color(0xFF007BFF);
+  static const successColor = Color(0xFF04CE4B);
+  static const textColor = Colors.white;
+  static const backgroundColor = Color(0xFFEAE8E8);
+  static const primaryTextColor = Colors.black;
+  static const secondaryTextColor = Color(0xFF555555);
+
   @override
   Widget build(BuildContext context) {
-    // Colores basados en la tabla proporcionada
-    const primaryColor = Color(0xFF007BFF); // Azul eléctrico - Navegación, botones principales
-    const secondaryColor = Color(0xFF00E676); // Verde neón - Botones secundarios, acentos
-    const successColor = Color(0xFFFFD700); // Dorado - Trofeos, recompensas
-    const backgroundColor = Color(0xFF0A0A0A); // Negro profundo - Fondo general
-    const textColor = Color(0xFFFFFFFF); // Blanco - Texto principal
-    const secondaryTextColor = Color(0xFFB0BEC5); // Gris claro - Etiquetas, subtítulos
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('GYMBROT',
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: textColor,
+                fontSize: 20)),
+        backgroundColor: primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu, color: textColor),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ],
+      ),
+      drawer: _buildDrawer(context),
+      body: Container(
+        color: backgroundColor,
+        child: Consumer<DataController>(
+          builder: (context, controller, child) {
+            if (controller.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-    return ChangeNotifierProvider(
-      create: (_) => DataController()..fetchData(), // Carga datos al iniciar
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: primaryColor,
-          title: Text('GymBrot', style: TextStyle(color: textColor)),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.menu, color: textColor),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
+            if (controller.errorMessage != null) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(
+                    controller.errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 16),
+                  ),
+                ),
+              );
+            }
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _buildWelcomeCard(controller.userData.userName),
+                  const SizedBox(height: 20),
+                  _buildProgressSection(controller.userData),
+                  const SizedBox(height: 20),
+                  _buildWeeklyCaloriesCard(),
+                  const SizedBox(height: 20),
+                  _buildWeeklyStepsCard(),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(color: primaryColor),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('GYMBROT',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: textColor)),
+                Text('Panel de inicio',
+                  style: TextStyle(
+                    color: textColor.withOpacity(0.8),
+                    fontSize: 14)),
+              ],
             ),
+          ),
+          _buildDrawerItem(Icons.home, 'Inicio', () => Navigator.pop(context)),
+          _buildDrawerItem(Icons.fitness_center, 'Ejercicios', () {}),
+          _buildDrawerItem(Icons.restaurant, 'Nutrición', () {}),
+          _buildDrawerItem(Icons.emoji_events, 'Desafíos', () {}),
+          _buildDrawerItem(Icons.person, 'Perfil', () {}),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: primaryColor),
+      title: Text(title, style: const TextStyle(color: primaryTextColor)),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildWelcomeCard(String? userName) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('¡Bienvenido de nuevo, ${userName ?? 'Usuario'}!',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: primaryTextColor)),
+            const SizedBox(height: 8),
+            const Text('Aquí está tu resumen de progreso y los consejos de hoy.',
+              style: TextStyle(color: secondaryTextColor)),
           ],
         ),
-        drawer: Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(color: primaryColor),
-                child: Text(
-                  'Menú',
-                  style: TextStyle(color: textColor, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              ListTile(
-                leading: Icon(Icons.home, color: successColor), // Dorado para gamificación
-                title: Text('Inicio', style: TextStyle(color: secondaryTextColor)),
-                onTap: () {
-                  Navigator.pop(context); // Cierra el Drawer
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.fitness_center, color: successColor),
-                title: Text('Entrenamientos', style: TextStyle(color: secondaryTextColor)),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Lógica para navegar a Entrenamientos
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.restaurant, color: successColor),
-                title: Text('Nutrición', style: TextStyle(color: secondaryTextColor)),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Lógica para navegar a Nutrición
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.settings, color: successColor),
-                title: Text('Configuración', style: TextStyle(color: secondaryTextColor)),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Lógica para navegar a Configuración
-                },
-              ),
-            ],
+      ),
+    );
+  }
+
+  Widget _buildProgressSection(DataModel userData) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildProgressCard(
+            'Calorías Hoy',
+            '${userData.todayCalories ?? 0} / ${userData.dailyCalorieGoal ?? 2200} kcal',
+            '+200 respecto ayer',
+            Icons.local_fire_department,
+            Colors.orange,
           ),
+          const SizedBox(width: 10),
+          _buildProgressCard(
+            'Pasos Hoy',
+            '${userData.todaySteps ?? 0} / ${userData.dailyStepGoal ?? 10000}',
+            'Meta: ${userData.dailyStepGoal ?? 10000} pasos',
+            Icons.directions_walk,
+            Colors.blue,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressCard(String title, String value, String subtitle, IconData icon, Color iconColor) {
+    return SizedBox(
+      width: 180,
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
         ),
-        body: Container(
-          color: backgroundColor, // Fondo negro profundo
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Consumer<DataController>(
-                  builder: (context, controller, child) {
-                    if (controller.errorMessage != null) {
-                      return Center(
-                        child: Text(
-                          controller.errorMessage!,
-                          style: TextStyle(color: Colors.red, fontSize: 16),
-                        ),
-                      );
-                    }
-                    if (controller.data.isEmpty) {
-                      return Center(child: CircularProgressIndicator(color: primaryColor));
-                    }
-                    return ListView.builder(
-                      padding: EdgeInsets.all(16.0),
-                      itemCount: controller.data.length,
-                      itemBuilder: (context, index) {
-                        final item = controller.data[index];
-                        return Card(
-                          elevation: 4.0,
-                          margin: EdgeInsets.symmetric(vertical: 8.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            side: BorderSide(color: secondaryTextColor), // Borde gris claro
-                          ),
-                          child: ListTile(
-                            leading: Icon(Icons.circle, color: successColor, size: 10), // Dorado para gamificación
-                            title: Text(item.title, style: TextStyle(color: textColor, fontSize: 18)),
-                            subtitle: Text(item.description, style: TextStyle(color: secondaryTextColor)),
-                            trailing: Icon(Icons.emoji_events, color: successColor), // Ícono de trofeo corregido
-                            onTap: () {
-                              // Lógica al tocar un item (por ejemplo, navegar a detalles)
-                            },
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+              Text(title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: secondaryTextColor)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(icon, color: iconColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(value,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: primaryTextColor)),
+                  ),
+                ],
               ),
+              const SizedBox(height: 8),
+              Text(subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: secondaryTextColor)),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWeeklyCaloriesCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Resumen Semanal de Calorías',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: primaryTextColor)),
+            const SizedBox(height: 8),
+            const Text('Calorías consumidas vs. quemadas esta semana.',
+              style: TextStyle(color: secondaryTextColor)),
+            const SizedBox(height: 16),
+            Container(
+              height: 200,
+              padding: const EdgeInsets.all(8),
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+                          return Text(days[value.toInt()]);
+                        },
+                      ),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: const [
+                        FlSpot(0, 1500),
+                        FlSpot(1, 1800),
+                        FlSpot(2, 2200),
+                        FlSpot(3, 2100),
+                        FlSpot(4, 1900),
+                        FlSpot(5, 2300),
+                        FlSpot(6, 2000),
+                      ],
+                      isCurved: true,
+                      color: Colors.blue,
+                      barWidth: 3,
+                      belowBarData: BarAreaData(show: false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildLegendItem(Colors.blue, 'Consumidas'),
+                const SizedBox(width: 16),
+                _buildLegendItem(Colors.green, 'Quemadas'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeeklyStepsCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Pasos Semanales',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: primaryTextColor)),
+            const SizedBox(height: 8),
+            const Text('Tu control de pasos a lo largo de la semana.',
+              style: TextStyle(color: secondaryTextColor)),
+            const SizedBox(height: 16),
+            Container(
+              height: 200,
+              padding: const EdgeInsets.all(8),
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  barGroups: [
+                    BarChartGroupData(
+                      x: 0,
+                      barRods: [
+                        BarChartRodData(
+                          toY: 7000,
+                          color: Colors.blue,
+                          width: 20,
+                        )
+                      ],
+                    ),
+                    // Agrega más días aquí...
+                  ],
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(days[value.toInt()]),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String text) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(text, style: const TextStyle(color: primaryTextColor)),
+      ],
     );
   }
 }
