@@ -40,7 +40,7 @@ class DataController with ChangeNotifier {
       ];
       
       _userData = DataModel(
-        userName: 'lola2',
+        userName: 'Jose Delgado',
         todayCalories: 1850,
         dailyCalorieGoal: 2200,
         todaySteps: 8750,
