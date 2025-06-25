@@ -57,9 +57,9 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  _buildWelcomeCard(controller.userData.userName),
+                  _buildWelcomeCard(controller.data[0].userName),
                   const SizedBox(height: 20),
-                  _buildProgressSection(controller.userData),
+                  _buildProgressSection(controller.data[0]),
                   const SizedBox(height: 20),
                   _buildWeeklyCaloriesCard(),
                   const SizedBox(height: 20),
@@ -73,38 +73,44 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(color: primaryColor),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('GYMBROT',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textColor)),
-                Text('Panel de inicio',
-                  style: TextStyle(
-                    color: textColor.withOpacity(0.8),
-                    fontSize: 14)),
-              ],
-            ),
+ Widget _buildDrawer(BuildContext context) {
+  return Drawer(
+    child: ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        DrawerHeader(
+          decoration: const BoxDecoration(color: primaryColor),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('GYMBROT',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: textColor)),
+              Text('Panel de inicio',
+                style: TextStyle(
+                  color: textColor.withOpacity(0.8),
+                  fontSize: 14)),
+            ],
           ),
-          _buildDrawerItem(Icons.home, 'Inicio', () => Navigator.pop(context)),
-          _buildDrawerItem(Icons.fitness_center, 'Mis Rutinas', () {}),
-          _buildDrawerItem(Icons.restaurant, 'Nutrición', () {}),
-          _buildDrawerItem(Icons.emoji_events, 'Desafíos', () {}),
-          _buildDrawerItem(Icons.person, 'Perfil', () {}),
-        ],
-      ),
-    );
-  }
+        ),
+        _buildDrawerItem(Icons.home, 'Inicio', () {
+          Navigator.pop(context);
+          Navigator.pushReplacementNamed(context, '/home');
+        }),
+        _buildDrawerItem(Icons.fitness_center, 'Mis Rutinas', () {
+          Navigator.pop(context);
+          Navigator.pushReplacementNamed(context, '/routines');
+        }),
+        _buildDrawerItem(Icons.restaurant, 'Nutrición', () {}),
+        _buildDrawerItem(Icons.emoji_events, 'Desafíos', () {}),
+        _buildDrawerItem(Icons.person, 'Perfil', () {}),
+      ],
+    ),
+  );
+}
 
   Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
@@ -313,67 +319,56 @@ class HomeScreen extends StatelessWidget {
 }
 
   Widget _buildWeeklyStepsCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Pasos Semanales',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: primaryTextColor)),
-            const SizedBox(height: 8),
-            const Text('Tu control de pasos a lo largo de la semana.',
-              style: TextStyle(color: secondaryTextColor)),
-            const SizedBox(height: 16),
-            Container(
-              height: 200,
-              padding: const EdgeInsets.all(8),
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  barGroups: [
-                    BarChartGroupData(
-                      x: 0,
-                      barRods: [
-                        BarChartRodData(
-                          toY: 7000,
-                          color: Colors.blue,
-                          width: 20,
-                        )
-                      ],
-                    ),
-                    // Agrega más días aquí...
-                  ],
-                  titlesData: FlTitlesData(
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(days[value.toInt()]),
-                          );
-                        },
-                      ),
+  return Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+    color: Colors.white,
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Pasos Semanales'),
+          const SizedBox(height: 8),
+          const Text('Tu control de pasos...',),
+          const SizedBox(height: 16),
+          Container(
+            height: 200,
+            padding: const EdgeInsets.all(8),
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                barGroups: [
+                  BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 7000, color: Colors.blue, width: 20)]),
+                  BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 8500, color: Colors.blue, width: 20)]),
+                  BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 9200, color: Colors.blue, width: 20)]),
+                  BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 6500, color: Colors.blue, width: 20)]),
+                  BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 7800, color: Colors.blue, width: 20)]),
+                  BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 9500, color: Colors.blue, width: 20)]),
+                  BarChartGroupData(x: 6, barRods: [BarChartRodData(toY: 6000, color: Colors.blue, width: 20)]),
+                ],
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        const days = ['L', 'M', 'Mi', 'J', 'V', 'S', 'D'];
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(days[value.toInt()]),
+                        );
+                      },
                     ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildLegendItem(Color color, String text) {
     return Row(

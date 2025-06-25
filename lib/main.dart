@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'views/home_screen.dart';
+import 'views/routine_screen.dart';
 import 'controllers/data_controller.dart';
 
 void main() {
@@ -32,13 +33,17 @@ class MyApp extends StatelessWidget {
               900: Color(0xFF0D47A1),
             },
           ),
-          scaffoldBackgroundColor: const Color(0xFF0A0A0A),
+          scaffoldBackgroundColor: const Color(0xFFEAE8E8),
           textTheme: const TextTheme(
-            headlineSmall: TextStyle(color: Color(0xFFFFFFFF)),
-            bodyMedium: TextStyle(color: Color(0xFFB0BEC5)),
+            headlineSmall: TextStyle(color: Colors.black),
+            bodyMedium: TextStyle(color: Color(0xFF555555)),
           ),
         ),
-        home: HomeScreen(),
+        initialRoute: '/home',
+        routes: {
+          '/home': (context) => const HomeScreen(),
+          '/routines': (context) => const RoutineScreen(),
+        },
         debugShowCheckedModeBanner: false,
       ),
     );
