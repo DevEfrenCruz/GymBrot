@@ -15,7 +15,7 @@ class OnboardingScreen extends StatelessWidget {
           Container(
             color: Colors.green,
             child: Center(
-                child: Text('Explora la app',
+                child: Text('Descubre tu rutina',
                     style: TextStyle(fontSize: 24, color: Colors.white))),
           ),
           Container(
