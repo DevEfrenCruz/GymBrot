@@ -10,6 +10,11 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final bool onboardingCompleted;
+
+    MyApp({required this.onboardingCompleted});
+
+    @override
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => DataController()),
@@ -39,8 +44,13 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: HomeScreen(),
+              initialRoute: onboardingCompleted ? '/login' : '/onboarding',
         debugShowCheckedModeBanner: false,
+        routes: {
+        '/onboarding': (context) => OnboardingScreen(),
+        '/login': (context) => LoginScreen(),
+        '/register': (context) => RegisterScreen(),
+      },
       ),
-    );
   }
 }
