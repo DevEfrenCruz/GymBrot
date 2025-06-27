@@ -53,13 +53,14 @@ class HomeScreen extends StatelessWidget {
               );
             }
 
+            final List<DataModel> data = controller.data; // Uso explícito del getter
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  _buildWelcomeCard(controller.data[0].userName),
+                  _buildWelcomeCard(data[0].userName),
                   const SizedBox(height: 20),
-                  _buildProgressSection(controller.data[0]),
+                  _buildProgressSection(data[0]),
                   const SizedBox(height: 20),
                   _buildWeeklyCaloriesCard(),
                   const SizedBox(height: 20),
@@ -81,18 +82,30 @@ class HomeScreen extends StatelessWidget {
         DrawerHeader(
           decoration: const BoxDecoration(color: primaryColor),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text('GYMBROT',
+              Image.asset(
+                'assets/logoGymBrot.png', // Asegúrate de que el nombre coincida con pubspec.yaml
+                height: 50,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'GYMBROT',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: textColor)),
-              Text('Panel de inicio',
+                  color: textColor,
+                ),
+              ),
+              Text(
+                'Panel de inicio',
                 style: TextStyle(
                   color: textColor.withOpacity(0.8),
-                  fontSize: 14)),
+                  fontSize: 14,
+                ),
+              ),
             ],
           ),
         ),
@@ -147,37 +160,35 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildProgressSection(DataModel userData) {
-  return SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Row(
-      children: [
-        SizedBox(
-          width: 160, // Ancho reducido 
-          child: _buildProgressCard(
-            'Calorías Hoy',
-            '${userData.todayCalories ?? 0} / ${userData.dailyCalorieGoal ?? 2200} kcal',
-            '+200 respecto ayer',
-            Icons.local_fire_department,
-            Colors.orange,
-           
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 160,
+            child: _buildProgressCard(
+              'Calorías Hoy',
+              '${userData.todayCalories ?? 0} / ${userData.dailyCalorieGoal ?? 2200} kcal',
+              '+200 respecto ayer',
+              Icons.local_fire_department,
+              Colors.orange,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        SizedBox(
-          width: 160, // Mismo ancho reducido
-          child: _buildProgressCard(
-            'Pasos Hoy',
-            '${userData.todaySteps ?? 0} / ${userData.dailyStepGoal ?? 10000}',
-            'Meta: ${userData.dailyStepGoal ?? 10000} pasos',
-            Icons.directions_walk,
-            Colors.blue,
-            
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 160,
+            child: _buildProgressCard(
+              'Pasos Hoy',
+              '${userData.todaySteps ?? 0} / ${userData.dailyStepGoal ?? 10000}',
+              'Meta: ${userData.dailyStepGoal ?? 10000} pasos',
+              Icons.directions_walk,
+              Colors.blue,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   Widget _buildProgressCard(String title, String value, String subtitle, IconData icon, Color iconColor) {
     return SizedBox(
@@ -223,152 +234,150 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
- Widget _buildWeeklyCaloriesCard() {
-  return Card(
-    elevation: 4,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10.0),
-    ),
-    color: Colors.white,
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Resumen Semanal de Calorías',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: primaryTextColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Calorías consumidas vs. quemadas esta semana.',
-            style: TextStyle(color: secondaryTextColor),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 200,
-            padding: const EdgeInsets.all(8),
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: true),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-                        return Text(days[value.toInt()]);
-                      },
-                    ),
-                  ),
-                ),
-                lineBarsData: [
-                  // Línea de calorías CONSUMIDAS (azul)
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 1500),
-                      FlSpot(1, 1800),
-                      FlSpot(2, 2200),
-                      FlSpot(3, 2100),
-                      FlSpot(4, 1900),
-                      FlSpot(5, 2300),
-                      FlSpot(6, 2000),
-                    ],
-                    isCurved: true,
-                    color: Colors.blue,
-                    barWidth: 3,
-                    belowBarData: BarAreaData(show: false),
-                  ),
-                  // Línea de calorías QUEMADAS (verde) - Datos simulados
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 1200),
-                      FlSpot(1, 1600),
-                      FlSpot(2, 1900),
-                      FlSpot(3, 1700),
-                      FlSpot(4, 2100),
-                      FlSpot(5, 1800),
-                      FlSpot(6, 1500),
-                    ],
-                    isCurved: true,
-                    color: Colors.green,
-                    barWidth: 3,
-                    belowBarData: BarAreaData(show: false),
-                  ),
-                ],
+  Widget _buildWeeklyCaloriesCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Resumen Semanal de Calorías',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: primaryTextColor,
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendItem(Colors.blue, 'Consumidas'),
-              const SizedBox(width: 16),
-              _buildLegendItem(Colors.green, 'Quemadas'),
-            ],
-          ),
-        ],
+            const SizedBox(height: 8),
+            const Text(
+              'Calorías consumidas vs. quemadas esta semana.',
+              style: TextStyle(color: secondaryTextColor),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              height: 200,
+              padding: const EdgeInsets.all(8),
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+                          return Text(days[value.toInt()]);
+                        },
+                      ),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: const [
+                        FlSpot(0, 1500),
+                        FlSpot(1, 1800),
+                        FlSpot(2, 2200),
+                        FlSpot(3, 2100),
+                        FlSpot(4, 1900),
+                        FlSpot(5, 2300),
+                        FlSpot(6, 2000),
+                      ],
+                      isCurved: true,
+                      color: Colors.blue,
+                      barWidth: 3,
+                      belowBarData: BarAreaData(show: false),
+                    ),
+                    LineChartBarData(
+                      spots: const [
+                        FlSpot(0, 1200),
+                        FlSpot(1, 1600),
+                        FlSpot(2, 1900),
+                        FlSpot(3, 1700),
+                        FlSpot(4, 2100),
+                        FlSpot(5, 1800),
+                        FlSpot(6, 1500),
+                      ],
+                      isCurved: true,
+                      color: Colors.green,
+                      barWidth: 3,
+                      belowBarData: BarAreaData(show: false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildLegendItem(Colors.blue, 'Consumidas'),
+                const SizedBox(width: 16),
+                _buildLegendItem(Colors.green, 'Quemadas'),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildWeeklyStepsCard() {
-  return Card(
-    elevation: 4,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-    color: Colors.white,
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Pasos Semanales'),
-          const SizedBox(height: 8),
-          const Text('Tu control de pasos...',),
-          const SizedBox(height: 16),
-          Container(
-            height: 200,
-            padding: const EdgeInsets.all(8),
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                barGroups: [
-                  BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 7000, color: Colors.blue, width: 20)]),
-                  BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 8500, color: Colors.blue, width: 20)]),
-                  BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 9200, color: Colors.blue, width: 20)]),
-                  BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 6500, color: Colors.blue, width: 20)]),
-                  BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 7800, color: Colors.blue, width: 20)]),
-                  BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 9500, color: Colors.blue, width: 20)]),
-                  BarChartGroupData(x: 6, barRods: [BarChartRodData(toY: 6000, color: Colors.blue, width: 20)]),
-                ],
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const days = ['L', 'M', 'Mi', 'J', 'V', 'S', 'D'];
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(days[value.toInt()]),
-                        );
-                      },
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Pasos Semanales'),
+            const SizedBox(height: 8),
+            const Text('Tu control de pasos...'),
+            const SizedBox(height: 16),
+            Container(
+              height: 200,
+              padding: const EdgeInsets.all(8),
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  barGroups: [
+                    BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 7000, color: Colors.blue, width: 20)]),
+                    BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 8500, color: Colors.blue, width: 20)]),
+                    BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 9200, color: Colors.blue, width: 20)]),
+                    BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 6500, color: Colors.blue, width: 20)]),
+                    BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 7800, color: Colors.blue, width: 20)]),
+                    BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 9500, color: Colors.blue, width: 20)]),
+                    BarChartGroupData(x: 6, barRods: [BarChartRodData(toY: 6000, color: Colors.blue, width: 20)]),
+                  ],
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          const days = ['L', 'M', 'Mi', 'J', 'V', 'S', 'D'];
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(days[value.toInt()]),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildLegendItem(Color color, String text) {
     return Row(

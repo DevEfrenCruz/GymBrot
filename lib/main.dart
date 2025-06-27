@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'views/home_screen.dart';
 import 'views/routine_screen.dart';
 import 'controllers/data_controller.dart';
+import 'controllers/routine_controller.dart';
 
 void main() {
   runApp(MyApp());
@@ -14,6 +15,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => DataController()),
+        ChangeNotifierProvider(create: (_) => RoutineController()), // Añadido
       ],
       child: MaterialApp(
         title: 'GymBrot',

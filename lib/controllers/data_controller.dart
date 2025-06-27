@@ -6,7 +6,7 @@ class DataController with ChangeNotifier {
     DataModel(
       title: 'Resumen Diario',
       description: 'Progreso de hoy',
-      userName: 'Juan Pérez',
+      userName: 'SON GOKU',
       todayCalories: 1800,
       dailyCalorieGoal: 2200,
       todaySteps: 7500,
@@ -16,12 +16,11 @@ class DataController with ChangeNotifier {
   String? _errorMessage;
   bool _isLoading = false;
 
-  List<DataModel> get data => _data;
+  List<DataModel> get data => _data; // Getter explícito
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
 
   DataController() {
-    // Simula carga inicial
     _isLoading = true;
     notifyListeners();
     _isLoading = false; // Desactiva loading después de simular
