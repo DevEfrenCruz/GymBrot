@@ -12,10 +12,11 @@ class LoginScreen extends StatelessWidget {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
 
     // Credenciales válidas (puedes cambiarlas)
-    const validEmail = "correo@correo.com";
-    const validPassword = "123456";
+    //const validEmail = "correo@correo.com";
+    //const validPassword = "123456";
 
-    if (email == validEmail && password == validPassword) {
+    //if (email == validEmail && password == validPassword) {
+    if (email.isNotEmpty && password.isNotEmpty) {
       // Guardar estado de autenticación
       await userProvider.login(email);
 

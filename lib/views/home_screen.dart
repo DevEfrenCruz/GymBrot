@@ -51,13 +51,15 @@ class HomeScreen extends StatelessWidget {
               );
             }
 
+            final List<DataModel> data =
+                controller.data; // Uso explícito del getter
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  _buildWelcomeCard(controller.data[0].userName),
+                  _buildWelcomeCard(data[0].userName),
                   const SizedBox(height: 20),
-                  _buildProgressSection(controller.data[0]),
+                  _buildProgressSection(data[0]),
                   const SizedBox(height: 20),
                   _buildWeeklyCaloriesCard(),
                   const SizedBox(height: 20),
@@ -82,6 +84,12 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Image.asset(
+                  'assets/logoGymBrot.png', // Asegúrate de que el nombre coincida con pubspec.yaml
+                  height: 50,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 10),
                 const Text('GYMBROT',
                     style: TextStyle(
                         fontSize: 24,

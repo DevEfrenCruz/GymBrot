@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gym_brot/controllers/routine_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'views/home_screen.dart';
@@ -20,6 +21,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => DataController()),
+        ChangeNotifierProvider(create: (_) => RoutineController()),
       ],
       child: MyApp(onboardingCompleted: onboardingCompleted),
     ),
