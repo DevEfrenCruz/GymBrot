@@ -1,11 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../controllers/data_controller.dart';
-import '../models/data_model.dart';
+import '../providers/auth_provider.dart';
+import '../providers/progress_provider.dart';
+import '../providers/routine_provider.dart';
+import '../models/progress_models.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  Future<void> _loadData() async {
+    final progressProvider =
+        Provider.of<ProgressProvider>(context, listen: false);
+    final routineProvider =
+        Provider.of<RoutineProvider>(context, listen: false);
+
+    await Future.wait([
+      progressProvider.loadTodayStats(),
+      progressProvider.loadWeeklyStats(),
+      progressProvider.loadCurrentXp(),
+      progressProvider.loadMyChallenges(),
+      routineProvider.loadMyRoutines(),
+    ]);
+  }
 
   // Paleta de colores constante
   static const primaryColor = Color(0xFF007BFF);
@@ -23,51 +53,68 @@ class HomeScreen extends StatelessWidget {
             style: TextStyle(
                 fontWeight: FontWeight.bold, color: textColor, fontSize: 20)),
         backgroundColor: primaryColor,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: textColor),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ],
       ),
       drawer: _buildDrawer(context),
-      body: Container(
-        color: backgroundColor,
-        child: Consumer<DataController>(
-          builder: (context, controller, child) {
-            if (controller.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: Container(
+          color: backgroundColor,
+          child: Consumer3<AuthProvider, ProgressProvider, RoutineProvider>(
+            builder: (context, authProvider, progressProvider, routineProvider,
+                child) {
+              if (progressProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            if (controller.errorMessage != null) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Text(
-                    controller.errorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 16),
+              if (progressProvider.errorMessage != null) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          progressProvider.errorMessage!,
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadData,
+                          child: const Text('Reintentar'),
+                        ),
+                      ],
+                    ),
                   ),
+                );
+              }
+
+              final user = authProvider.currentUser;
+              final todayStats = progressProvider.todayStats;
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildWelcomeCard(user?.nickname?.isNotEmpty == true
+                        ? user!.nickname!
+                        : user?.email ?? 'Usuario'),
+                    const SizedBox(height: 20),
+                    _buildProgressSection(todayStats, progressProvider),
+                    const SizedBox(height: 20),
+                    _buildWeeklyCaloriesCard(progressProvider),
+                    const SizedBox(height: 20),
+                    _buildWeeklyStepsCard(progressProvider),
+                    const SizedBox(height: 20),
+                    _buildChallengesCard(progressProvider),
+                    const SizedBox(height: 20),
+                    _buildXpCard(progressProvider),
+                  ],
                 ),
               );
-            }
-
-            final List<DataModel> data =
-                controller.data; // Uso explícito del getter
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  _buildWelcomeCard(data[0].userName),
-                  const SizedBox(height: 20),
-                  _buildProgressSection(data[0]),
-                  const SizedBox(height: 20),
-                  _buildWeeklyCaloriesCard(),
-                  const SizedBox(height: 20),
-                  _buildWeeklyStepsCard(),
-                ],
-              ),
-            );
-          },
+            },
+          ),
         ),
       ),
     );
@@ -85,7 +132,7 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Image.asset(
-                  'assets/logoGymBrot.png', // Asegúrate de que el nombre coincida con pubspec.yaml
+                  'assets/logoGymBrot.png',
                   height: 50,
                   fit: BoxFit.contain,
                 ),
@@ -103,15 +150,35 @@ class HomeScreen extends StatelessWidget {
           ),
           _buildDrawerItem(Icons.home, 'Inicio', () {
             Navigator.pop(context);
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pushNamed(context, '/home');
           }),
           _buildDrawerItem(Icons.fitness_center, 'Mis Rutinas', () {
             Navigator.pop(context);
-            Navigator.pushReplacementNamed(context, '/routines');
+            Navigator.pushNamed(context, '/routines');
           }),
-          _buildDrawerItem(Icons.restaurant, 'Nutrición', () {}),
-          _buildDrawerItem(Icons.emoji_events, 'Desafíos', () {}),
-          _buildDrawerItem(Icons.person, 'Perfil', () {}),
+          _buildDrawerItem(Icons.emoji_events, 'Logros', () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/achievements');
+          }),
+          _buildDrawerItem(Icons.flag, 'Desafíos', () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/challenges');
+          }),
+          _buildDrawerItem(Icons.card_giftcard, 'Recompensas', () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/rewards');
+          }),
+          _buildDrawerItem(Icons.person, 'Perfil', () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/profile');
+          }),
+          const Divider(),
+          _buildDrawerItem(Icons.logout, 'Cerrar Sesión', () async {
+            Navigator.pop(context);
+            final authProvider =
+                Provider.of<AuthProvider>(context, listen: false);
+            await authProvider.logout();
+          }),
         ],
       ),
     );
@@ -137,7 +204,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('¡Bienvenido de nuevo, ${userName ?? 'Usuario'}!',
+            Text('¡Bienvenido de nuevo, $userName!',
                 style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -152,30 +219,58 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressSection(DataModel userData) {
+  Widget _buildProgressSection(
+      DailyStatDto? todayStats, ProgressProvider progressProvider) {
+    final caloriesIn = todayStats?.caloriesIn ?? 0;
+    final caloriesOut = todayStats?.caloriesOut ?? 0;
+    final steps = todayStats?.steps ?? 0;
+    final routinesCompleted = todayStats?.routinesCompleted ?? 0;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
           SizedBox(
-            width: 160, // Ancho reducido
+            width: 160,
             child: _buildProgressCard(
-              'Calorías Hoy',
-              '${userData.todayCalories ?? 0} / ${userData.dailyCalorieGoal ?? 2200} kcal',
-              '+200 respecto ayer',
+              'Calorías Consumidas',
+              '$caloriesIn kcal',
+              'Meta: 2200 kcal',
               Icons.local_fire_department,
               Colors.orange,
             ),
           ),
           const SizedBox(width: 10),
           SizedBox(
-            width: 160, // Mismo ancho reducido
+            width: 160,
+            child: _buildProgressCard(
+              'Calorías Quemadas',
+              '$caloriesOut kcal',
+              'Meta: 500 kcal',
+              Icons.fitness_center,
+              Colors.green,
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 160,
             child: _buildProgressCard(
               'Pasos Hoy',
-              '${userData.todaySteps ?? 0} / ${userData.dailyStepGoal ?? 10000}',
-              'Meta: ${userData.dailyStepGoal ?? 10000} pasos',
+              '$steps',
+              'Meta: 10000 pasos',
               Icons.directions_walk,
               Colors.blue,
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 160,
+            child: _buildProgressCard(
+              'Rutinas Completadas',
+              '$routinesCompleted',
+              'Meta: 1 rutina',
+              Icons.check_circle,
+              Colors.purple,
             ),
           ),
         ],
@@ -226,7 +321,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWeeklyCaloriesCard() {
+  Widget _buildWeeklyCaloriesCard(ProgressProvider progressProvider) {
+    final weeklyStats = progressProvider.weeklyStats;
+    final caloriesData = _prepareWeeklyCaloriesData(weeklyStats);
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -272,39 +370,25 @@ class HomeScreen extends StatelessWidget {
                             'Sáb',
                             'Dom'
                           ];
-                          return Text(days[value.toInt()]);
+                          if (value.toInt() >= 0 &&
+                              value.toInt() < days.length) {
+                            return Text(days[value.toInt()]);
+                          }
+                          return const Text('');
                         },
                       ),
                     ),
                   ),
                   lineBarsData: [
-                    // Línea de calorías CONSUMIDAS (azul)
                     LineChartBarData(
-                      spots: const [
-                        FlSpot(0, 1500),
-                        FlSpot(1, 1800),
-                        FlSpot(2, 2200),
-                        FlSpot(3, 2100),
-                        FlSpot(4, 1900),
-                        FlSpot(5, 2300),
-                        FlSpot(6, 2000),
-                      ],
+                      spots: caloriesData['consumed'] ?? [],
                       isCurved: true,
                       color: Colors.blue,
                       barWidth: 3,
                       belowBarData: BarAreaData(show: false),
                     ),
-                    // Línea de calorías QUEMADAS (verde) - Datos simulados
                     LineChartBarData(
-                      spots: const [
-                        FlSpot(0, 1200),
-                        FlSpot(1, 1600),
-                        FlSpot(2, 1900),
-                        FlSpot(3, 1700),
-                        FlSpot(4, 2100),
-                        FlSpot(5, 1800),
-                        FlSpot(6, 1500),
-                      ],
+                      spots: caloriesData['burned'] ?? [],
                       isCurved: true,
                       color: Colors.green,
                       barWidth: 3,
@@ -329,7 +413,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWeeklyStepsCard() {
+  Widget _buildWeeklyStepsCard(ProgressProvider progressProvider) {
+    final weeklyStats = progressProvider.weeklyStats;
+    final stepsData = _prepareWeeklyStepsData(weeklyStats);
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
@@ -339,10 +426,18 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Pasos Semanales'),
+            const Text(
+              'Pasos Semanales',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: primaryTextColor,
+              ),
+            ),
             const SizedBox(height: 8),
             const Text(
-              'Tu control de pasos...',
+              'Tu control de pasos diarios esta semana.',
+              style: TextStyle(color: secondaryTextColor),
             ),
             const SizedBox(height: 16),
             Container(
@@ -351,39 +446,21 @@ class HomeScreen extends StatelessWidget {
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  barGroups: [
-                    BarChartGroupData(x: 0, barRods: [
-                      BarChartRodData(toY: 7000, color: Colors.blue, width: 20)
-                    ]),
-                    BarChartGroupData(x: 1, barRods: [
-                      BarChartRodData(toY: 8500, color: Colors.blue, width: 20)
-                    ]),
-                    BarChartGroupData(x: 2, barRods: [
-                      BarChartRodData(toY: 9200, color: Colors.blue, width: 20)
-                    ]),
-                    BarChartGroupData(x: 3, barRods: [
-                      BarChartRodData(toY: 6500, color: Colors.blue, width: 20)
-                    ]),
-                    BarChartGroupData(x: 4, barRods: [
-                      BarChartRodData(toY: 7800, color: Colors.blue, width: 20)
-                    ]),
-                    BarChartGroupData(x: 5, barRods: [
-                      BarChartRodData(toY: 9500, color: Colors.blue, width: 20)
-                    ]),
-                    BarChartGroupData(x: 6, barRods: [
-                      BarChartRodData(toY: 6000, color: Colors.blue, width: 20)
-                    ]),
-                  ],
+                  barGroups: stepsData,
                   titlesData: FlTitlesData(
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (value, meta) {
                           const days = ['L', 'M', 'Mi', 'J', 'V', 'S', 'D'];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(days[value.toInt()]),
-                          );
+                          if (value.toInt() >= 0 &&
+                              value.toInt() < days.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(days[value.toInt()]),
+                            );
+                          }
+                          return const Text('');
                         },
                       ),
                     ),
@@ -394,6 +471,152 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildChallengesCard(ProgressProvider progressProvider) {
+    final activeChallenges = progressProvider.getActiveChallenges();
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Desafíos Activos',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: primaryTextColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (activeChallenges.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'No tienes desafíos activos en este momento.',
+                  style: TextStyle(color: secondaryTextColor),
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              ...activeChallenges.map((challenge) =>
+                  _buildChallengeItem(challenge, progressProvider)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChallengeItem(
+      UserChallengeDto challenge, ProgressProvider progressProvider) {
+    final challengeInfo = challenge.challenge;
+    if (challengeInfo == null) return const SizedBox.shrink();
+
+    final progress = progressProvider.getChallengeProgress(challenge);
+    final percentage = (progress * 100).toInt();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            challengeInfo.name,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${challenge.progress} / ${challengeInfo.goalValue} ${challengeInfo.goalType}',
+            style: const TextStyle(
+              fontSize: 12,
+              color: secondaryTextColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.grey[300],
+            valueColor: const AlwaysStoppedAnimation<Color>(successColor),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$percentage% completado',
+            style: const TextStyle(
+              fontSize: 12,
+              color: secondaryTextColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildXpCard(ProgressProvider progressProvider) {
+    final currentXp = progressProvider.currentXp;
+    final weeklyXp = progressProvider.getWeeklyXpEarned();
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Experiencia (XP)',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: primaryTextColor,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildXpStat('XP Total', currentXp.toString(), Icons.star),
+                _buildXpStat(
+                    'XP Esta Semana', weeklyXp.toString(), Icons.trending_up),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildXpStat(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: successColor, size: 32),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: secondaryTextColor,
+          ),
+        ),
+      ],
     );
   }
 
@@ -412,5 +635,43 @@ class HomeScreen extends StatelessWidget {
         Text(text, style: const TextStyle(color: primaryTextColor)),
       ],
     );
+  }
+
+  Map<String, List<FlSpot>> _prepareWeeklyCaloriesData(
+      List<DailyStatDto> weeklyStats) {
+    final consumed = <FlSpot>[];
+    final burned = <FlSpot>[];
+
+    for (int i = 0; i < weeklyStats.length; i++) {
+      consumed.add(FlSpot(i.toDouble(), weeklyStats[i].caloriesIn.toDouble()));
+      burned.add(FlSpot(i.toDouble(), weeklyStats[i].caloriesOut.toDouble()));
+    }
+
+    return {
+      'consumed': consumed,
+      'burned': burned,
+    };
+  }
+
+  List<BarChartGroupData> _prepareWeeklyStepsData(
+      List<DailyStatDto> weeklyStats) {
+    final barGroups = <BarChartGroupData>[];
+
+    for (int i = 0; i < weeklyStats.length; i++) {
+      barGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: weeklyStats[i].steps.toDouble(),
+              color: Colors.blue,
+              width: 20,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return barGroups;
   }
 }
